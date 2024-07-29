@@ -35,7 +35,7 @@ class ArgonServerDatabaseReader:
     def check_flight_declaration_exists(self, flight_declaration_id: str) -> bool:
         return FlightDeclaration.objects.filter(id=flight_declaration_id).exists()
 
-    def get_flight_declaration_by_id(self, flight_declaration_id: str) -> Tuple[None, FlightDeclaration]:
+    def get_flight_declaration_by_id(self, flight_declaration_id: str) -> Union[None, FlightDeclaration]:
         try:
             flight_declaration = FlightDeclaration.objects.get(id=flight_declaration_id)
             return flight_declaration
@@ -61,15 +61,15 @@ class ArgonServerDatabaseReader:
         except FlightAuthorization.DoesNotExist:
             return None
 
-    def get_current_flight_declaration_ids(self, now: str) -> Union[None, uuid4]:
+    def get_current_flight_declaration_ids(self, timestamp: str) -> Union[None, uuid4]:
         """This method gets flight operation ids that are active in the system within near the time interval"""
-        n = arrow.get(now)
+        ts = arrow.get(timestamp)
 
-        two_minutes_before_now = n.shift(seconds=-120).isoformat()
-        five_hours_from_now = n.shift(minutes=300).isoformat()
+        two_minutes_before_ts = ts.shift(seconds=-120).isoformat()
+        five_hours_from_ts = ts.shift(minutes=300).isoformat()
         relevant_ids = FlightDeclaration.objects.filter(
-            start_datetime__gte=two_minutes_before_now,
-            end_datetime__lte=five_hours_from_now,
+            start_datetime__gte=two_minutes_before_ts,
+            end_datetime__lte=five_hours_from_ts,
         ).values_list("id", flat=True)
         return relevant_ids
 
